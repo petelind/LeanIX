@@ -270,6 +270,60 @@ def show_data_flow():
     png_bytes = dot.pipe(format='png')
     display(Image(png_bytes))
 
+
+import matplotlib.pyplot as plt
+
+
+def show_user_journey():
+    # Define stages and emotion values (0 = angry, 1 = neutral, 2 = happy, 3 = delighted)
+    stages = ["Place Order", "Track Fulfillment", "Receive Notification", "Update Preferences", "Reorder Experience"]
+    emotions = [1, 0, 0, 1, 3]  # Numerical scale
+    emojis = ["😐", "😠", "😠", "😐", "😀"]
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
+
+    # Friction points (As-Is limitations)
+    friction = [
+        "Slow inventory check via sync REST calls to Spring service.",
+        "Fulfillment backend uses polling + manual batch updates.",
+        "Notifications via MSMQ often delayed or fail silently.",
+        "Preferences stored in Oracle; UI sluggish and unresponsive.",
+        "No reordering logic or history tracking in legacy system."
+    ]
+
+    # To-Be resolutions (Lambda-based)
+    resolutions = [
+        "Parallel Lambda invocation checks stock instantly.",
+        "SNS triggers real-time fulfillment updates.",
+        "SNS with retry guarantees multi-channel delivery.",
+        "Low-latency APIs read/write user data in DynamoDB.",
+        "SNS event log supports reordering via event replay."
+    ]
+
+    # Plot setup
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(stages, emotions, marker='o', linestyle='-', color='steelblue', linewidth=2)
+
+    # Add emoji markers and annotations
+    for i, stage in enumerate(stages):
+        ax.text(i, emotions[i] + 0.1, emojis[i], fontsize=16, ha='center')
+        ax.annotate(f"Friction: {friction[i]}\nTo-Be: {resolutions[i]}",
+                    xy=(i, emotions[i]), xytext=(i, emotions[i] - 0.8),
+                    textcoords='data',
+                    arrowprops=dict(arrowstyle="->", color='gray'),
+                    fontsize=8, ha='center', wrap=True)
+
+    # Y-axis labels
+    ax.set_yticks([0, 1, 2, 3])
+    ax.set_yticklabels(["😠 Angry", "😐 Neutral", "😊 Happy", "😀 Delighted"])
+    ax.set_title("User Journey View – Justifying the Migration to AWS")
+    ax.set_xlabel("User Activity")
+    ax.set_ylabel("User Emotion")
+    ax.grid(True, axis='y', linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.show()
+
+
 def show_tobe_app_arch():
     dot = Digraph('ToBeApplicationView', format='png')
     dot.attr(rankdir='TB', fontsize='12', size='8.27,11.69!', ratio='fill')  # A4 Portrait
